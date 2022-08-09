@@ -1,2 +1,3 @@
 # pytorch_open_registration_example
-Example of using pytorch's open device registration API
+
+This repo contains a mini example of using pytorch's open device registration API through the dispatcher.
