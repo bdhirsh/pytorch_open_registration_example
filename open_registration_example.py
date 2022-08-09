@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import os
+import shutil
+>>>>>>> 85184a2414e1376254b9e12c21bd98fa26b1fb5a
 import torch
 from utils.custom_device_mode import foo_module, enable_foo_device
 
@@ -91,15 +96,25 @@ def test(x, y):
 _holder = enable_foo_device()
 
 try:
+<<<<<<< HEAD
     x = torch.ones(4, 4, device='bar')
+=======
+    x = torch.empty(4, 4, device='bar')
+>>>>>>> 85184a2414e1376254b9e12c21bd98fa26b1fb5a
     exit("Error: you should not be able to make a tensor on an arbitrary 'bar' device.")
 except RuntimeError as e:
     print("(Correctly) unable to create tensor on device='bar'")
 
 print("Creating x on device 'foo:0'")
+<<<<<<< HEAD
 x1 = torch.ones(4, 4, device='foo:0')
 print("Creating y on device 'foo:0'")
 y1 = torch.ones(4, 4, device='foo:0')
+=======
+x1 = torch.empty(4, 4, device='foo:0')
+print("Creating y on device 'foo:0'")
+y1 = torch.empty(4, 4, device='foo:0')
+>>>>>>> 85184a2414e1376254b9e12c21bd98fa26b1fb5a
 
 test(x1, y1)
 
@@ -113,8 +128,21 @@ del _holder
 foo_device1 = foo_module.custom_device(1)
 
 print("Creating x on device 'foo:1'")
+<<<<<<< HEAD
 x2 = torch.ones(4, 4, device=foo_device1)
 print("Creating y on device 'foo:1'")
 y2 = torch.ones(4, 4, device=foo_device1)
 
 test(x2, y2)
+=======
+x2 = torch.empty(4, 4, device=foo_device1)
+print("Creating y on device 'foo:1'")
+y2 = torch.empty(4, 4, device=foo_device1)
+
+test(x2, y2)
+
+# Some cleanup
+default_build_root = torch.utils.cpp_extension.get_default_build_root()
+if os.path.exists(default_build_root):
+    shutil.rmtree(default_build_root, ignore_errors=True)
+>>>>>>> 85184a2414e1376254b9e12c21bd98fa26b1fb5a
