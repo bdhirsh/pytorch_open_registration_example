@@ -9,15 +9,15 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 
 # Running this file prints the following:
 
-# Loaded custom extension.
 # (Correctly) unable to create tensor on device='bar'
+# (Correctly) unable to create tensor on device='foo:2'
 # Creating x on device 'foo:0'
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
 # Creating y on device 'foo:0'
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-
+#
 # Test START
 # x.device=privateuseone:0, x.is_cpu=False
 # y.device=privateuseone:0, y.is_cpu=False
@@ -31,7 +31,7 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # z_cpu.device=cpu, z_cpu.is_cpu=True
 # Calling z2 = z_cpu + z_cpu
 # Test END
-
+#
 # Custom allocator's delete() called!
 # Creating x on device 'foo:1'
 # Custom aten::empty.memory_format() called!
@@ -39,7 +39,7 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # Creating y on device 'foo:1'
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-
+#
 # Test START
 # x.device=privateuseone:0, x.is_cpu=False
 # y.device=privateuseone:0, y.is_cpu=False
@@ -53,13 +53,12 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # z_cpu.device=cpu, z_cpu.is_cpu=True
 # Calling z2 = z_cpu + z_cpu
 # Test END
-
+#
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
-
 
 def test(x, y):
     print()
@@ -90,11 +89,19 @@ def test(x, y):
 # into our custom device objects automatically.
 _holder = enable_foo_device()
 
+# Show that in general, passing in a custom device string will fail.
 try:
     x = torch.ones(4, 4, device='bar')
     exit("Error: you should not be able to make a tensor on an arbitrary 'bar' device.")
 except RuntimeError as e:
     print("(Correctly) unable to create tensor on device='bar'")
+
+# Show that in general, passing in a custom device string will fail.
+try:
+    x = torch.ones(4, 4, device='foo:2')
+    exit("Error: the foo device only has two valid indices: foo:0 and foo:1")
+except RuntimeError as e:
+    print("(Correctly) unable to create tensor on device='foo:2'")
 
 print("Creating x on device 'foo:0'")
 x1 = torch.ones(4, 4, device='foo:0')
@@ -104,7 +111,7 @@ y1 = torch.ones(4, 4, device='foo:0')
 test(x1, y1)
 
 # Normally you would probably want this device TorchFunction translation to happen
-# permanently, bu this example I want to remove it.
+# permanently, but this example I want to remove it.
 del _holder
 
 
