@@ -5,7 +5,7 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # in PyTorch, through the dispatcher.
 # It also shows what two possible user API's for custom devices look like. Either:
 # (1) Expose your custom device as an object, device=my_device_obj
-# (2) Ask users to enable a TorchFunctionMode, so you can use device strings: device="my_device"
+# (2) Allow users to directly use device strings: device="my_device"
 
 # Running this file prints the following:
 
@@ -17,21 +17,21 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # Creating y on device 'foo:0'
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-#
+
 # Test START
-# x.device=privateuseone:0, x.is_cpu=False
-# y.device=privateuseone:0, y.is_cpu=False
+# x.device=foo:0, x.is_cpu=False
+# y.device=foo:0, y.is_cpu=False
 # Calling z = x + y
 # Custom aten::add.Tensor() called!
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-# z.device=privateuseone:0, z.is_cpu=False
+# z.device=foo:0, z.is_cpu=False
 # Calling z = z.to(device="cpu")
 # Custom aten::_copy_from() called!
 # z_cpu.device=cpu, z_cpu.is_cpu=True
 # Calling z2 = z_cpu + z_cpu
 # Test END
-#
+
 # Custom allocator's delete() called!
 # Creating x on device 'foo:1'
 # Custom aten::empty.memory_format() called!
@@ -39,21 +39,21 @@ from utils.custom_device_mode import foo_module, enable_foo_device
 # Creating y on device 'foo:1'
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-#
+
 # Test START
-# x.device=privateuseone:0, x.is_cpu=False
-# y.device=privateuseone:0, y.is_cpu=False
+# x.device=foo:0, x.is_cpu=False
+# y.device=foo:0, y.is_cpu=False
 # Calling z = x + y
 # Custom aten::add.Tensor() called!
 # Custom aten::empty.memory_format() called!
 # Custom allocator's allocate() called!
-# z.device=privateuseone:0, z.is_cpu=False
+# z.device=foo:0, z.is_cpu=False
 # Calling z = z.to(device="cpu")
 # Custom aten::_copy_from() called!
 # z_cpu.device=cpu, z_cpu.is_cpu=True
 # Calling z2 = z_cpu + z_cpu
 # Test END
-#
+
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
 # Custom allocator's delete() called!
@@ -85,9 +85,10 @@ def test(x, y):
     print("Test END")
     print()
 
-# Option 1: Use a TorchFunctionMode object, that will convert `device="foo"` calls
-# into our custom device objects automatically.
-_holder = enable_foo_device()
+# Option 1: Use torch.register_privateuse1_backend("foo"), which will allow
+# "foo" as a device string to work seamlessly with pytorch's API's.
+# You may need a more recent nightly of PyTorch for this.
+torch.register_privateuse1_backend('foo')
 
 # Show that in general, passing in a custom device string will fail.
 try:
@@ -110,10 +111,6 @@ y1 = torch.ones(4, 4, device='foo:0')
 
 test(x1, y1)
 
-# Normally you would probably want this device TorchFunction translation to happen
-# permanently, but this example I want to remove it.
-del _holder
-
 
 # Option 2: Directly expose a custom device object
 # You can pass an optional index arg, specifying which device index to use.
@@ -123,5 +120,15 @@ print("Creating x on device 'foo:1'")
 x2 = torch.ones(4, 4, device=foo_device1)
 print("Creating y on device 'foo:1'")
 y2 = torch.ones(4, 4, device=foo_device1)
+
+# Option 3: Enable a TorchFunctionMode object in user land,
+# that will convert `device="foo"` calls into our custom device objects automatically.
+# Option 1 is strictly better here (in particular, printing a.device() will still
+# print "privateuseone" instead of your custom device name). Mostly showing this option because:
+# (a) Torch Function Modes have been around for longer, and the API in Option 1
+#     is only available on a more recent nightly.
+# (b) This is a cool example of how powerful torch_function and torch_dispatch modes can be!
+# holder = enable_foo_device()
+# del _holder
 
 test(x2, y2)

@@ -1,6 +1,6 @@
 import torch
 import torch.utils.cpp_extension
-from torch.overrides import enable_torch_function_mode, TorchFunctionMode
+from torch.overrides import TorchFunctionMode
 
 # Load the C++ extension containing your custom kernels.
 foo_module = torch.utils.cpp_extension.load(
@@ -18,10 +18,9 @@ print('Loaded custom extension.')
 # The user will globally enable the below mode when calling this API
 def enable_foo_device():
     m = FooDeviceMode()
-    holder = enable_torch_function_mode(m)
-    holder.__enter__()
+    m.__enter__()
     # If you want the mode to never be disabled, then this function shouldn't return anything.
-    return holder
+    return m
 
 # This is a simple TorchFunctionMode class that:
 # (a) Intercepts all torch.* calls
